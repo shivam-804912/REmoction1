@@ -1,12 +1,12 @@
 import React from 'react';
-import {AbsoluteFill, interpolate, Sequence, spring, useCurrentFrame, useVideoConfig} from 'remotion';
+import {AbsoluteFill, Audio, interpolate, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {Background} from './components/Background';
 import {Character} from './components/Character';
 import {SpeechBubble} from './components/SpeechBubble';
 import {Intro} from './Intro';
 import {SCENES} from './scenes/Scenes';
 import {Stage} from './scenes/Stage';
-import {INTRO_FRAMES, TIMELINE, TOTAL_FRAMES} from './script';
+import {INTRO_FRAMES, TIMELINE, TOTAL_FRAMES, VOICE_DELAY} from './script';
 import type {Emotion, Speaker} from './script';
 
 const CHARACTER_HEIGHT = 640;
@@ -16,12 +16,15 @@ const useCharacterState = (who: Speaker) => {
 	const line = TIMELINE.find((l) => frame >= l.from && frame < l.from + l.duration);
 	if (!line) return {talking: false, emotion: 'neutral' as Emotion, lineFrame: frame};
 	const isSpeaker = line.speaker === who;
-	// Speaking stops a little before the bubble closes.
-	const talking = isSpeaker && frame - line.from < line.duration * 0.72;
+	const lineFrame = frame - line.from;
+	// Talking while the voice clip plays; the mouth follows its loudness.
+	const voiceFrame = lineFrame - VOICE_DELAY;
+	const talking = isSpeaker && voiceFrame >= 0 && voiceFrame < line.voice.frames;
 	return {
 		talking,
+		mouth: talking ? Number(line.voice.envelope[voiceFrame]) / 9 : undefined,
 		emotion: isSpeaker ? line.emotion : line.listenerEmotion,
-		lineFrame: frame - line.from,
+		lineFrame,
 	};
 };
 
@@ -68,7 +71,15 @@ export const PostMCPExplainer: React.FC = () => {
 
 			{TIMELINE.map((line) => (
 				<Sequence key={`b-${line.index}`} from={line.from} durationInFrames={line.duration} layout="none">
-					<SpeechBubble speaker={line.speaker} text={line.text} duration={line.duration} />
+					<SpeechBubble
+						speaker={line.speaker}
+						text={line.text}
+						duration={line.duration}
+						speech={[VOICE_DELAY, VOICE_DELAY + line.voice.frames]}
+					/>
+					<Sequence from={VOICE_DELAY} layout="none">
+						<Audio src={staticFile(line.voice.file)} />
+					</Sequence>
 				</Sequence>
 			))}
 		</AbsoluteFill>

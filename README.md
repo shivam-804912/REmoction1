@@ -34,11 +34,24 @@ npm run render     # render to out/postmcp-explainer.mp4
 
 ## Editing
 
-- **Script, emotions and timing:** `src/script.ts`. Each line's duration is computed from its word count, and `extra` adds frames to a line.
+- **Script, emotions and timing:** `src/script.ts`. Each line lasts as long as its voice clip plus a short pause, and `extra` adds frames to a line.
 - **Characters:** `src/components/Character.tsx`, an SVG rig with blinking, lip-flap, gestures and emotions.
 - **Per-line visuals:** `src/scenes/Scenes.tsx`.
 - **Colours and fonts:** `src/theme.ts`. The fonts are bundled in `public/fonts`, so renders work offline.
 
 The PostMCP mark in this video is a placeholder paper-plane wordmark. To use the official brand, put the real logo into `PlaneMark` / `PostMCPLogo` in `src/components/Icons.tsx`.
 
-The video has no voice-over. Speech bubbles reveal each line word by word. To add narration, drop the audio into `public/` and add an `<Audio>` per line in `src/Video.tsx`.
+## Voices
+
+Each character is voiced with an offline neural Hindi voice: **Shiva** uses Piper `hi_IN-pratham-medium` (male) and **Sheya** uses `hi_IN-priyamvada-medium` (female). The clips are in `public/voices/`. The mouths lip-sync to each clip's loudness, and the speech-bubble words reveal in step with the voice.
+
+To change a line, edit it in `src/script.ts` **and** edit its Devanagari pronunciation in `scripts/generate_voices.py`, then regenerate:
+
+```bash
+pip install sherpa-onnx soundfile numpy
+# download and extract vits-piper-hi_IN-pratham-medium and vits-piper-hi_IN-priyamvada-medium
+# from https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models into ./voices-models
+python3 scripts/generate_voices.py --voices-dir ./voices-models
+```
+
+The script rewrites `src/voice-data.json`, which stores each clip's length and mouth envelope, so the timing updates automatically. To use recorded human voices instead, change `main()` in the script to load your recordings in place of the TTS output. Everything else stays the same.

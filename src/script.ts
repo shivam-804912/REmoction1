@@ -1,3 +1,5 @@
+import voiceData from './voice-data.json';
+
 export type Speaker = 'sheya' | 'shiva';
 
 export type Emotion = 'neutral' | 'curious' | 'happy' | 'surprised' | 'excited' | 'confident';
@@ -121,19 +123,27 @@ export const SCRIPT: Line[] = [
 
 export const INTRO_FRAMES = 75;
 
-const wordCount = (s: string) => s.split(/\s+/).filter(Boolean).length;
+/** Frames between a line's bubble popping in and its voice starting. */
+export const VOICE_DELAY = 6;
 
-/** Reading/speaking time: ~2.6 words per second plus breathing room. */
-export const lineDuration = (line: Line) =>
-	Math.round(36 + wordCount(line.text) * 11.5 + (line.extra ?? 0));
+export type Voice = {file: string; frames: number; envelope: string};
+export const VOICES: Voice[] = voiceData;
 
-export type TimedLine = Line & {from: number; duration: number; index: number};
+if (VOICES.length !== SCRIPT.length) {
+	throw new Error('voice-data.json is out of date: re-run scripts/generate_voices.py');
+}
+
+/** Voice clip length plus a short pause after it (and any extra beat). */
+export const lineDuration = (line: Line, index: number) =>
+	VOICE_DELAY + VOICES[index].frames + 16 + (line.extra ?? 0);
+
+export type TimedLine = Line & {from: number; duration: number; index: number; voice: Voice};
 
 export const TIMELINE: TimedLine[] = (() => {
 	let cursor = INTRO_FRAMES;
 	return SCRIPT.map((line, index) => {
-		const duration = lineDuration(line);
-		const timed = {...line, from: cursor, duration, index};
+		const duration = lineDuration(line, index);
+		const timed = {...line, from: cursor, duration, index, voice: VOICES[index]};
 		cursor += duration;
 		return timed;
 	});

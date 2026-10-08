@@ -42,6 +42,8 @@ const LOOKS: Record<CharacterKind, Look> = {
 type Props = {
 	kind: CharacterKind;
 	talking: boolean;
+	/** Mouth openness 0-1 from the voice track; falls back to random flaps. */
+	mouth?: number;
 	emotion: Emotion;
 	/** Frame offset into the current line, used for gesture entrances. */
 	lineFrame: number;
@@ -52,7 +54,7 @@ type Props = {
 
 const SHADOW = 'url(#cut-shadow)';
 
-export const Character: React.FC<Props> = ({kind, talking, emotion, lineFrame, flip = false, height = 640}) => {
+export const Character: React.FC<Props> = ({kind, talking, mouth: mouthLevel, emotion, lineFrame, flip = false, height = 640}) => {
 	const frame = useCurrentFrame();
 	const {fps} = useVideoConfig();
 	const look = LOOKS[kind];
@@ -69,8 +71,12 @@ export const Character: React.FC<Props> = ({kind, talking, emotion, lineFrame, f
 	const blinkCycle = (frame + (kind === 'shiva' ? 37 : 0)) % 96;
 	const blink = blinkCycle < 4 ? 0.12 : 1;
 
-	// Mouth while talking: random openness changing every 3 frames
-	const mouthOpen = talking ? 0.25 + random(`${seed}-mouth-${step}`) * 0.75 : 0;
+	// Mouth while talking: follows the voice loudness, else random flaps every 3 frames
+	const mouthOpen = !talking
+		? 0
+		: mouthLevel !== undefined
+			? (mouthLevel < 0.15 ? 0 : 0.2 + mouthLevel * 0.8)
+			: 0.25 + random(`${seed}-mouth-${step}`) * 0.75;
 
 	// Gesture entrance at the start of each line
 	const enter = spring({frame: lineFrame, fps, config: {damping: 14, mass: 0.8}});

@@ -8,6 +8,8 @@ type Props = {
 	speaker: Speaker;
 	text: string;
 	duration: number;
+	/** Frame range (within the line) the voice plays over; words reveal across it. */
+	speech: [number, number];
 };
 
 const NAME: Record<Speaker, {label: string; color: string}> = {
@@ -15,7 +17,7 @@ const NAME: Record<Speaker, {label: string; color: string}> = {
 	shiva: {label: 'Shiva', color: COLORS.teal},
 };
 
-export const SpeechBubble: React.FC<Props> = ({speaker, text, duration}) => {
+export const SpeechBubble: React.FC<Props> = ({speaker, text, duration, speech}) => {
 	const frame = useCurrentFrame();
 	const pop = usePop(0, 13);
 	const exit = interpolate(frame, [duration - 8, duration], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
@@ -23,9 +25,9 @@ export const SpeechBubble: React.FC<Props> = ({speaker, text, duration}) => {
 	const left = speaker === 'sheya';
 
 	const words = text.split(' ');
-	// Reveal words over the first ~70% of the line, like speech.
+	// Reveal words in step with the voice.
 	const shown = Math.ceil(
-		interpolate(frame, [4, Math.max(10, duration * 0.7)], [0, words.length], {
+		interpolate(frame, [speech[0] - 2, speech[1] - 4], [0, words.length], {
 			extrapolateLeft: 'clamp',
 			extrapolateRight: 'clamp',
 		}),
