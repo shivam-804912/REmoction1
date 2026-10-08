@@ -1,0 +1,23 @@
+{
+  "name": "postmcp-paper-explainer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Paper-cutout style Remotion explainer video for PostMCP AI",
+  "scripts": {
+    "dev": "remotion studio",
+    "render": "remotion render PostMCPExplainer out/postmcp-explainer.mp4",
+    "still": "remotion still PostMCPExplainer out/still.png --frame=300",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.534",
+    "@remotion/fonts": "^4.0.534",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.534"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "typescript": "^5.6.3"
+  }
+}
